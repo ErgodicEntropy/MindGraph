@@ -1,6 +1,9 @@
 import streamlit as st
-import agents
-
+# from pages.login import login_page
+# from pages.home import home_page
+# from pages.display import display_page
+# from pages.chat import chat_page
+from pages import login, home, display, chat
 
 st.set_page_config(
     page_title="main",
@@ -14,76 +17,51 @@ if "page" not in st.session_state:
     st.session_state.page = "login"
     
 
+# Title and welcome message
+st.title("MindGraph 🧠")
+st.write("Welcome to MindGraph! Make your experience visualized!")
 
-st.markdown(
+custom_css = f"""
+        <style>
+            .stApp {{
+                background-color: {"#1E1E1E" if st.session_state.theme == "dark" else "#FFFFFF"};
+                color: {"#FFFFFF" if st.session_state.theme == "dark" else "#000000"};
+            }}
+            .stButton>button {{
+                color: {"#FFFFFF" if st.session_state.theme == "dark" else "#000000"};
+                background-color: {"#2E2E2E" if st.session_state.theme == "dark" else "#F0F2F6"};
+            }}
+            .stTextInput>div>div>input, .stTextArea>div>div>textarea {{
+                color: {"#FFFFFF" if st.session_state.theme == "dark" else "#000000"};
+                background-color: {"#2E2E2E" if st.session_state.theme == "dark" else "#FFFFFF"};
+            }}
+        </style>
     """
-    <style>
-        /* Hide the automatic sidebar navigation menu */
-        div[data-testid="stSidebarNav"] {
-            display: none;
-        }
-    </style>
-    """,
-    unsafe_allow_html=True,
-)
-    
+
+def toggle_theme():
+    if st.session_state.theme == "light":
+        st.session_state.theme = "dark"
+    else:
+        st.session_state.theme = "light"
+
+#Mode Settings
+st.markdown(custom_css, unsafe_allow_html=True)
+if st.sidebar.button("Toggle Dark/Light Mode", on_click=toggle_theme):
+    st.markdown(custom_css, unsafe_allow_html=True)
 
 
 
-    
-
-                
-
-
-
-
-
-#CRUD THE GRAPH: Insert, Search, Update, Delete
-def crud_graph(): 
-    pass
-
-def suggest_components(): #suggest nodes and edges
-    pass
-
-def version_control(): #session storage: a list of graphs
-    pass
-
-def summarize_text():
-    pass
-
-def summarize_graph():
-    pass
-
-def expand_edge(): #explanation, summarization and QA chat
-    pass
-
-def expand_node(): #explanation, summarization and QA chat
-    pass 
-
-def memory_techniques():
-    pass
-
-def anki_logic():
-    pass
-
-def Export_Save():
-    pass
-
-def Share(): #Real-Time Collaboration, Documentation and Comments (Users in same session -> Network Effects)
-    pass
-
-
-        
-def return_home():
-    pass
-    if st.button("Go Home"):
-        st.session_state.page = "home"
-        
-        
-        
+#Multi-Page Simulation in SPA using Mutli-Level Function Calling: Route Url - Action/Request Handler pairs (1-n)
 def main():
-    pass
-
+    if st.session_state.page == "login":
+        login.login_page()
+    if st.session_state.page == "home":
+        home.home_page()
+    if st.session_state.page == "display":
+        display.display_page()
+    if st.session_state.page == "chat":
+        chat.chat_page()
+    
 if __name__ == "__main__":
     main()
 

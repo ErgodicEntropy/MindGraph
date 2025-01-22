@@ -10,59 +10,57 @@ import networkx as nx
 from pyvis.network import Network
 
 
-if "FilteredComponents" not in st.session_state:
-    st.session_state.FilteredComponents = []
-
-def extract_json(data_str:str): # LLM Response
-    try:
-        n = data_str.index('[')
-        m = data_str.index(']')
-        return json.loads(data_str[n:m+1].strip())
-    except (ValueError, json.JSONDecodeError) as e:
-        print(f"Error extracting JSON: {e}")
-        return {}
-
-def extract_JSON(data_str:str): # LLM Response
-    if data_str.startswith("```json"):
-        data_str = data_str[7:]
-    if data_str.endswith("```"):
-        data_str = data_str[:-3]
-    if data_str.startswith("```"):
-        data_str = data_str[3:]
-
-    data_str = data_str.strip()
-    try:
-        return json.loads(data_str)
-    except (ValueError, json.JSONDecodeError) as e:
-        print(f"Error extracting JSON: {e}")
-        return {}
-        
-
-
-def SpecLang(Option, LangList): #mostly a one time recursion
-    if Option == "Specify a language":    
-        LangList.remove("Specify a language")
-        user_lang = st.text_input("Add a language")
-        LangList.append(user_lang)
-        LangList.append("Specify a language")
-        Option = st.selectbox("Choose the langauge",LangList) #Language settings of the output
-        return SpecLang(Option, LangList)
-    else:
-        FinalOption = Option
-        return FinalOption
-
-
-
-# Directory to save uploaded files
-UPLOAD_DIR = 'uploads'
-os.makedirs(UPLOAD_DIR, exist_ok=True)
-
-VOCAL_DIR = 'vocal'
-os.makedirs(VOCAL_DIR, exist_ok=True)
-
-
-
 def home_page(): #action for the home route: #User Input Format and Content and Output Format
+    
+    if "FilteredComponents" not in st.session_state:
+        st.session_state.FilteredComponents = []
+
+    def extract_json(data_str:str): # LLM Response
+        try:
+            n = data_str.index('[')
+            m = data_str.index(']')
+            return json.loads(data_str[n:m+1].strip())
+        except (ValueError, json.JSONDecodeError) as e:
+            print(f"Error extracting JSON: {e}")
+            return {}
+
+    def extract_JSON(data_str:str): # LLM Response
+        if data_str.startswith("```json"):
+            data_str = data_str[7:]
+        if data_str.endswith("```"):
+            data_str = data_str[:-3]
+        if data_str.startswith("```"):
+            data_str = data_str[3:]
+
+        data_str = data_str.strip()
+        try:
+            return json.loads(data_str)
+        except (ValueError, json.JSONDecodeError) as e:
+            print(f"Error extracting JSON: {e}")
+            return {}
+            
+
+
+    def SpecLang(Option, LangList): #mostly a one time recursion
+        if Option == "Specify a language":    
+            LangList.remove("Specify a language")
+            user_lang = st.text_input("Add a language")
+            LangList.append(user_lang)
+            LangList.append("Specify a language")
+            Option = st.selectbox("Choose the langauge",LangList) #Language settings of the output
+            return SpecLang(Option, LangList)
+        else:
+            FinalOption = Option
+            return FinalOption
+
+
+
+    # Directory to save uploaded files
+    UPLOAD_DIR = 'uploads'
+    os.makedirs(UPLOAD_DIR, exist_ok=True)
+
+    VOCAL_DIR = 'vocal'
+    os.makedirs(VOCAL_DIR, exist_ok=True)    
     st.title("Home Page")
     st.write("Welcome to the Home Page!")
     # Header and subheader (add text inside the parentheses)
@@ -516,4 +514,6 @@ def home_page(): #action for the home route: #User Input Format and Content and 
 
 
     if st.button("Display Results"):
-        st.switch_page()
+        st.session_state.page == "display"
+        
+    
