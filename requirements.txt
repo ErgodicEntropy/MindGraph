@@ -1,0 +1,20 @@
+langchain==0.0.184
+transformers
+sentence-transformers
+torch @ https://download.pytorch.org/whl/cpu/torch-2.5.1%2Bcpu-cp311-cp311-win_amd64.whl
+cohere
+faiss-cpu
+chromadb==0.4.3
+streamlit
+streamlit-option-menu
+streamlit-router
+streamlit-authenticator==0.3.3
+streamlit-webrtc==0.47.9
+librosa
+pyvis
+networkx
+matplotlib
+pandas
+scipy
+numpy
+json
