@@ -5,11 +5,6 @@ from bcrypt import hashpw, gensalt, checkpw  # For password hashing
 ### MAIN RUN
 
 def login_page(): #User Registration, Profile Creation and Login
-    st.set_page_config(
-    page_title="login page",
-    page_icon="👋",
-    )
-
     # Function to hash passwords
     def hash_password(password):
         return hashpw(password.encode(), gensalt())
@@ -19,8 +14,6 @@ def login_page(): #User Registration, Profile Creation and Login
         return checkpw(plain_password.encode(), hashed_password)
 
 
-    if "theme" not in st.session_state:
-        st.session_state.theme = "light"
     if "user_action" not in st.session_state:
         st.session_state.user_action = None #Login or SignUp
     if "authentication_status" not in st.session_state:
@@ -29,7 +22,7 @@ def login_page(): #User Registration, Profile Creation and Login
 
     def user_action_reset():
         st.session_state.user_action = None
-        
+        st.rerun()        
 
 
     #DATABASE MS
@@ -48,15 +41,18 @@ def login_page(): #User Registration, Profile Creation and Login
     
     #User Settings    
     if st.session_state.user_action == None:
-        st.write("# Welcome to MindGraph 🧠")
+        # Title and welcome message
+        st.title("MindGraph 🧠")
+        st.write("Welcome to MindGraph! Make your experience visualized!")
         col1, col2 = st.columns(2)
         with col1:
             if st.button("Sign Up"):    
                 st.session_state.user_action = "Sign Up"
+                st.rerun()
         with col2:
             if st.button("Login"):    
                 st.session_state.user_action = "Login"
-
+                st.rerun()
     if st.session_state.user_action == "Sign Up":
         ##User Authentification and Profile Creation
         st.write("## Create Account")
@@ -82,7 +78,7 @@ def login_page(): #User Registration, Profile Creation and Login
 
     if st.session_state.user_action == "Login":
 
-        st.write("## Create Account")
+        st.write("## Sign In")
         login_username = st.text_input("Enter a username")
         login_password = st.text_input("Enter a password", type="password")    
         if st.button("Sign In"):
@@ -103,6 +99,7 @@ def login_page(): #User Registration, Profile Creation and Login
                     st.error(f"Database error: {e}")
                 finally:
                     conn.close()
+            st.rerun()
         if st.button("Back"):
             user_action_reset()  # Reset user_action to None
 
@@ -110,7 +107,7 @@ def login_page(): #User Registration, Profile Creation and Login
 
             if st.button("Start"):
                 st.session_state.page = "home"
-
+                st.rerun()
         if st.session_state.authentication_status is None:
             st.warning("Please fill in the form")
         
@@ -119,4 +116,4 @@ def login_page(): #User Registration, Profile Creation and Login
             if st.sidebar.button("Logout"):
                 st.session_state.authentication_status = True
                 st.session_state.clear()
-        
+                st.rerun()

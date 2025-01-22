@@ -39,7 +39,7 @@ DB_FAISS_PATH = os.path.abspath(os.path.join('vectorstore', 'db_faiss'))
 
 # cohere_api_token = os.environ.get("COHERE_API_KEY")
 
-llm = Cohere(cohere_api_key="OrnwUenHvjRTPPtZu9sqYj7bx5tBhbIfMu3eHn7r")
+llm = Cohere(cohere_api_key="")
 
 RTC = prompts.RetrievedTextComponents
 RFC = prompts.RetrievedFileComponents
@@ -117,17 +117,19 @@ def RetrieveTextComponents(user_input: str):
 
 
 # Create vector database
-def CreateVectorDB(DATA_PATH, filetype):
+def CreateVectorDB(filepath, file_type):
     os.makedirs(os.path.dirname(DB_FAISS_PATH), exist_ok=True)
     # Load documents from PDF files
-    if filetype == "text/plain":
-        loader = DirectoryLoader(DATA_PATH, glob='*.txt', loader_cls=TextLoader)
-    if filetype == "application/pdf":
-        loader = DirectoryLoader(DATA_PATH, glob='*.pdf', loader_cls=PyPDFLoader)
-    if filetype == "text/csv":
-        loader = DirectoryLoader(DATA_PATH, glob='*.csv', loader_cls=CSVLoader)        
-    if filetype == "application/json":
-        loader = DirectoryLoader(DATA_PATH, glob='*json', loader_cls=JSONLoader)
+    if file_type == "text/plain":
+        loader = TextLoader(filepath)
+    elif file_type == "application/pdf":
+        loader = PyPDFLoader(filepath)
+    elif file_type == "text/csv":
+        loader = CSVLoader(filepath)
+    elif file_type == "application/json":
+        loader = JSONLoader(filepath)
+    else:
+        raise ValueError(f"Unsupported file type: {file_type}")    
     
     documents = loader.load()
     

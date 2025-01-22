@@ -1,13 +1,13 @@
 import base64
 import streamlit as st
-from .. import agents 
+import os
+import sys 
+
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+import agents  # Now you can import agents.py
 
 def chat_page():
-    st.set_page_config(
-    page_title="chatbot page",
-    page_icon="👋",
-    )
-
     if "messages" not in st.session_state: # Initialize chat history in session state
         st.session_state.messages = [] #list of dictionaries {"role": {role: user/human , ai/assistant}, "content":{content}}
 
