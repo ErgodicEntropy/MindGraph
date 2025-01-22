@@ -15,30 +15,31 @@ import librosa
 DB_FAISS_PATH = os.path.abspath(os.path.join('vectorstore', 'db_faiss'))
 
 #WhisperAI: Speech Recognition Model
-processor = AutoProcessor.from_pretrained("openai/whisper-small")
-model = AutoModelForSpeechSeq2Seq.from_pretrained("openai/whisper-small")
+# processor = AutoProcessor.from_pretrained("openai/whisper-small")
+# model = AutoModelForSpeechSeq2Seq.from_pretrained("openai/whisper-small")
 
 
-tokenizer = AutoTokenizer.from_pretrained("google/flan-t5-large")
-model = AutoModelForSeq2SeqLM.from_pretrained("google/flan-t5-large")
+# tokenizer = AutoTokenizer.from_pretrained("google/flan-t5-large")
+# model = AutoModelForSeq2SeqLM.from_pretrained("google/flan-t5-large")
 
-tokenizer.pad_token = tokenizer.eos_token
+# tokenizer.pad_token = tokenizer.eos_token
 
-hf_pipeline = pipeline(
-    "text-generation",
-    model=model,
-    tokenizer=tokenizer,
-    device="cpu",  # Use GPU/cuda if available
-    max_length=100,
-    truncation = True, 
-    temperature=0.7,
-    do_sample = True
-)
+# hf_pipeline = pipeline(
+#     "text-generation",
+#     model=model,
+#     tokenizer=tokenizer,
+#     device="cpu",  # Use GPU/cuda if available
+#     max_length=100,
+#     truncation = True, 
+#     temperature=0.7,
+#     do_sample = True
+# )
 
-llm = HuggingFacePipeline(pipeline=hf_pipeline)
+# llm = HuggingFacePipeline(pipeline=hf_pipeline)
 
 # cohere_api_token = os.environ.get("COHERE_API_KEY")
-# llm = Cohere(cohere_api_key=cohere_api_token)
+
+llm = Cohere(cohere_api_key="OrnwUenHvjRTPPtZu9sqYj7bx5tBhbIfMu3eHn7r")
 
 RTC = prompts.RetrievedTextComponents
 RFC = prompts.RetrievedFileComponents
@@ -101,18 +102,18 @@ def RetrieveTextComponents(user_input: str):
     return resp 
 
 
-def RetrieveAudioComponents(audio_path):    
-    # Load an audio file (replace with your audio file path)
-    audio, sr = librosa.load(audio_path, sr=16000)
+# def RetrieveAudioComponents(audio_path):    
+#     # Load an audio file (replace with your audio file path)
+#     audio, sr = librosa.load(audio_path, sr=16000)
 
-    # Process the audio
-    input_features = processor(audio, sampling_rate=sr, return_tensors="pt").input_features
+#     # Process the audio
+#     input_features = processor(audio, sampling_rate=sr, return_tensors="pt").input_features
 
-    # Generate text
-    with torch.no_grad():
-        predicted_ids = model.generate(input_features)
-    transcription = processor.batch_decode(predicted_ids, skip_special_tokens=True)[0]
-    return RetrieveTextComponents(transcription)
+#     # Generate text
+#     with torch.no_grad():
+#         predicted_ids = model.generate(input_features)
+#     transcription = processor.batch_decode(predicted_ids, skip_special_tokens=True)[0]
+#     return RetrieveTextComponents(transcription)
 
 
 # Create vector database
@@ -172,7 +173,7 @@ def RetrieveFileComponents():
 
 def Connect(components: str):
     agent = LLMChain(llm=llm, prompt = C)
-    resp = agent.run({"componentss": components})
+    resp = agent.run({"components": components})
     memory.chat_memory.add_ai_message(resp)
     memory.chat_memory.add_message(components)
     return resp 

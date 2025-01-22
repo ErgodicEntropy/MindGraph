@@ -1,19 +1,17 @@
-from streamlit_option_menu import option_menu
-import streamlit_authenticator as stauth
 import streamlit as st
-import streamlit.components.v1 as components
-from streamlit.components.v1 import html
+import os
 from streamlit_webrtc import webrtc_streamer
 import librosa
-from pyvis.network import Network
-import networkx as nx
 import numpy as np
 import matplotlib.pyplot as plt
-import base64
-import agents
-import os
 import json
-import sqlite3
+import agents
+import networkx as nx
+from pyvis.network import Network
+
+
+if "FilteredComponents" not in st.session_state:
+    st.session_state.FilteredComponents = []
 
 def extract_json(data_str:str): # LLM Response
     try:
@@ -40,86 +38,6 @@ def extract_JSON(data_str:str): # LLM Response
         return {}
         
 
-custom_css = f"""
-        <style>
-            .stApp {{
-                background-color: {"#1E1E1E" if st.session_state.theme == "dark" else "#FFFFFF"};
-                color: {"#FFFFFF" if st.session_state.theme == "dark" else "#000000"};
-            }}
-            .stButton>button {{
-                color: {"#FFFFFF" if st.session_state.theme == "dark" else "#000000"};
-                background-color: {"#2E2E2E" if st.session_state.theme == "dark" else "#F0F2F6"};
-            }}
-            .stTextInput>div>div>input, .stTextArea>div>div>textarea {{
-                color: {"#FFFFFF" if st.session_state.theme == "dark" else "#000000"};
-                background-color: {"#2E2E2E" if st.session_state.theme == "dark" else "#FFFFFF"};
-            }}
-        </style>
-    """
-Languages = ["English", "French", "Arabic", "Specify a language"]
-
-NodeColors = [
-    "lightblue", "lightgreen", "lightcoral", "lightpink", "lightsalmon",
-    "blue", "green", "red", "yellow", "purple",
-    "#FF5733", "#33FF57", "#3357FF", "#FF33A1", "#A133FF"
-]
-
-EdgeColors = [
-    "gray", "black", "blue", "green", "red",
-    "#888888", "#444444", "#0000FF", "#00FF00", "#FF0000",
-    "rgba(128, 128, 128, 0.5)", "rgba(255, 0, 0, 0.5)"
-]
-
-Structures =  [
-    "Hierarchical",  # Represents layered structures like a tree or hierarchy.
-    "Network",       # Represents interconnected nodes without strict order.
-    "Sequential",     # Represents linear, step-by-step flows.
-    "Circular",
-   ]
-
-# Directory to save uploaded files
-UPLOAD_DIR = 'uploads'
-os.makedirs(UPLOAD_DIR, exist_ok=True)
-
-VOCAL_DIR = 'vocal'
-os.makedirs(VOCAL_DIR, exist_ok=True)
-
-#Session Storage Variables:
-
-
-#page tracker (using session states)
-if "theme" not in st.session_state:
-    st.session_state.theme = "light"
-if "user_action" not in st.session_state:
-    st.session_state.user_action = None #Login or SignUp
-if "messages" not in st.session_state: # Initialize chat history in session state
-    st.session_state.messages = [] #list of dictionaries {"role": {role: user/human , ai/assistant}, "content":{content}}
-
-
-# Session Storage Functions:
-def get_image_as_base64(path):
-    """
-    Encodes a local image file as a base64 data URL.
-    
-    Args:
-        path (str): Path to the local image file.
-    
-    Returns:
-        str: Base64-encoded data URL.
-    """
-    with open(path, "rb") as image_file:
-        encoded_string = base64.b64encode(image_file.read()).decode()
-    return f"data:image/png;base64,{encoded_string}"
-
-def toggle_theme():
-    if st.session_state.theme == "light":
-        st.session_state.theme = "dark"
-    else:
-        st.session_state.theme = "light"
-
-def user_action_reset():
-    st.session_state.user_action = None
-
 
 def SpecLang(Option, LangList): #mostly a one time recursion
     if Option == "Specify a language":    
@@ -132,125 +50,31 @@ def SpecLang(Option, LangList): #mostly a one time recursion
     else:
         FinalOption = Option
         return FinalOption
-    
 
 
-#Multi-Page Simulation in SPA using Mutli-Level Function Calling: Route Url - Action/Request Handler pairs (1-n)
 
-### MAIN RUN
+# Directory to save uploaded files
+UPLOAD_DIR = 'uploads'
+os.makedirs(UPLOAD_DIR, exist_ok=True)
 
-def login_page(): #User Registration, Profile Creation and Login
-    #User Settings    
-    if st.session_state.user_action == None:
-        st.write("# Welcome to MindGraph 🧠")
-        col1, col2 = st.columns(2)
-        with col1:
-            if st.button("Sign Up"):    
-                st.session_state.user_action = "Sign Up"
-        with col2:
-            if st.button("Login"):    
-                st.session_state.user_action = "Login"
-
-    conn = sqlite3.connect("users.db")
-
-    c = conn.cursor()
-
-    c.execute(
-        """
-        CREATE TABLE IF NOT EXISTS users (
-            username TEXT PRIMARY KEY,
-            password TEXT
-        )
-        """
-    )
-
-    conn.commit()
-
-    if st.session_state.user_action == "Sign Up":
-        ##User Authentification and Profile Creation
-        st.write("## Create Account")
-        new_username = st.text_input("Enter a username")
-        new_password = st.text_input("Enter a password", type="password")    
-        if st.button("Create Profile"):
-            if new_username and new_password:
-                try:
-                    hashed_password = stauth.Hasher([new_password]).generate()[0]
-                    c.execute("INSERT INTO users (username, password) VALUES (?, ?)", (new_username, hashed_password))
-                    conn.commit()
-                    st.success("Profile Created Successfully!")
-                except sqlite3.IntegrityError:
-                    st.error(f"Username {new_username} already exists. Please choose another!")
-            else:
-                st.warning("Please fill in the requried forms")
-        if st.button("Back"):
-            user_action_reset()
-            st.experimental_rerun() 
-
-    if st.session_state.user_action == "Login":
-        c.execute("SELECT username, password FROM users")
-        results = c.fetchall()
-
-        users = {}
-        for username, password in results:
-            users[username] = {'username':username, 'password':password}
-
-        authenticator = stauth.Authenticate(
-            users,
-            "app_cookie_name",  # Cookie name for session management
-            "signature_key",    # Secret key for cookie signing
-            cookie_expiry_days=30    
-        )
-        
-        name, authentication_status, username = authenticator.login("Login", "main")
-        
-        if authentication_status:
-            st.write("Welcome to your dashboard!")
-            st.write("You are now logged in.")
-            ####THE WHOLE REST OF APP LOGIC HERE
-
-            # Title and welcome message
-            st.title("MindGraph 🧠")
-            st.write("Welcome to MindGraph! Make your experience visualized!")
-
-            #Mode Settings
-            st.sidebar.button("Toggle Dark/Light Mode", on_click=toggle_theme)    
-            st.markdown(custom_css, unsafe_allow_html=True)
+VOCAL_DIR = 'vocal'
+os.makedirs(VOCAL_DIR, exist_ok=True)
 
 
-            if st.button("Input Information"):
-                st.experimental_rerun()
-                home_page()
 
-        elif authentication_status is False:
-            st.error("Invalid Username/Password")
-        elif authentication_status is None:
-            st.warning("Please fill in the form")
-        
-        if st.button("Back"):
-            user_action_reset()  # Reset user_action to None
-            st.experimental_rerun()  # Refresh the app to show the main menu
-
-        if authentication_status:         
-            if st.button("Logout"):
-                authenticator.logout("Logout","main")
-                st.session_state.clear()
-                st.experimental_rerun()
-        
-        conn.close()
-
-
-                
 def home_page(): #action for the home route: #User Input Format and Content and Output Format
     st.title("Home Page")
     st.write("Welcome to the Home Page!")
     # Header and subheader (add text inside the parentheses)
+    st.markdown("### Insert your information")
+    InputFormat = st.selectbox("Choose the input format", ["File", "Paragraph", "Audio"])
+
     st.sidebar.header("Settings")
-    st.sidebar.markdown("### Insert your information")
+    Languages = ["English", "French", "Arabic", "Specify a language"]
     LangOption = st.sidebar.selectbox("Choose the language",Languages, index=Languages.index("English"))
     Language = SpecLang(LangOption,Languages)
     ValueFilter = st.sidebar.slider("Select Filtration Level:", min_value=0, max_value=100, value=80, step=1, format="%d%%") #how extreme the pareto filtration is e.g. 20%-80% (by default) , 15%-85%...etc 
 
-    InputFormat = st.selectbox("Choose the input format", ["File", "Paragraph", "Audio"])
 
     if InputFormat == "Paragraph":
         # Text input
@@ -258,37 +82,36 @@ def home_page(): #action for the home route: #User Input Format and Content and 
         if user_input is not None:
             UserComponents = extract_json(agents.RetrieveTextComponents(user_input))
             ##Pareto Filtering
-            FilteredComponents = []
             for component in UserComponents:
                 if 100*component["weight"] >= ValueFilter:
-                    FilteredComponents.append(component)            
+                    st.session_state.FilteredComponents.append(component)            
             
-    if InputFormat == "Audio":
-        # Add the vocal recorder to the app
-        webrtc_ctx = webrtc_streamer(
-            key="audio-recorder",
-            audio_frame_callback=lambda frame: frame,
-            media_stream_constraints={"audio": True, "video": False},
-        )
+    # if InputFormat == "Audio":
+    #     # Add the vocal recorder to the app
+    #     webrtc_ctx = webrtc_streamer(
+    #         key="audio-recorder",
+    #         audio_frame_callback=lambda frame: frame,
+    #         media_stream_constraints={"audio": True, "video": False},
+    #     )
 
-        audio_frames = []
-        if webrtc_ctx.audio_receiver:
-            st.write("Recording...")
-            for frame in webrtc_ctx.audio_receiver.get_frames(timeout=10):  # Record for 10 seconds
-                audio_frames.append(frame.to_ndarray())
+    #     audio_frames = []
+    #     if webrtc_ctx.audio_receiver:
+    #         st.write("Recording...")
+    #         for frame in webrtc_ctx.audio_receiver.get_frames(timeout=10):  # Record for 10 seconds
+    #             audio_frames.append(frame.to_ndarray())
             
-            if audio_frames:
-                audio = np.concatenate(audio_frames)
-                librosa.output.write_wav(os.path.join(VOCAL_DIR,'recorded_audio.wav'), audio, sr=16000)
-                st.write("Recording saved.")
+    #         if audio_frames:
+    #             audio = np.concatenate(audio_frames)
+    #             librosa.output.write_wav(os.path.join(VOCAL_DIR,'recorded_audio.wav'), audio, sr=16000)
+    #             st.write("Recording saved.")
 
-        if audio_frames:            
-            UserComponents = extract_json(agents.RetrieveAudioComponents(os.path.join(VOCAL_DIR,'recorded_audio.wav')))
-            ##Pareto Filtering
-            FilteredComponents = []
-            for component in UserComponents:
-                if 100*component["weight"] >= ValueFilter:
-                    FilteredComponents.append(component)            
+    #     if audio_frames:            
+    #         UserComponents = extract_json(agents.RetrieveAudioComponents(os.path.join(VOCAL_DIR,'recorded_audio.wav')))
+    #         ##Pareto Filtering
+    #         FilteredComponents = []
+    #         for component in UserComponents:
+    #             if 100*component["weight"] >= ValueFilter:
+    #                 FilteredComponents.append(component)            
 
         
     if InputFormat == "File":
@@ -303,26 +126,44 @@ def home_page(): #action for the home route: #User Input Format and Content and 
             
             UserComponents = extract_json(agents.RetrieveFileComponents(user_input))
             ##Pareto Filtering
-            FilteredComponents = []
             for component in UserComponents:
                 if 100*component["weight"] >= ValueFilter:
-                    FilteredComponents.append(component)
+                    st.session_state.FilteredComponents.append(component)            
 
-    UserMetadata = extract_json(agents.Connect(FilteredComponents)) #dictionary of components, weights and their connections (dictonaries)
+    UserMetadata = extract_json(agents.Connect(st.session_state.FilteredComponents)) #dictionary of components, weights and their connections (dictonaries)
     
-    #### FILTER COMPONENTS: GLOBAL LIST OR SESSION STATE SOLUTION
     #Graph Metadata:    
     ## Customization options
+
+    Structures =  [
+        "Hierarchical",  # Represents layered structures like a tree or hierarchy.
+        "Network",       # Represents interconnected nodes without strict order.
+        "Sequential",     # Represents linear, step-by-step flows.
+        "Circular",
+    ]
     st.sidebar.markdown("### Graph Customization")
     Structure = st.sidebar.selectbox("Choose a graph layout",Structures, index=Structures.index("Network"))
 
     ## Advanced settings
     with st.sidebar.expander("Advanced Settings"):
+        NodeColors = [
+            "lightblue", "lightgreen", "lightcoral", "lightpink", "lightsalmon",
+            "blue", "green", "red", "yellow", "purple",
+            "#FF5733", "#33FF57", "#3357FF", "#FF33A1", "#A133FF"
+        ]
+
+        EdgeColors = [
+            "gray", "black", "blue", "green", "red",
+            "#888888", "#444444", "#0000FF", "#00FF00", "#FF0000",
+            "rgba(128, 128, 128, 0.5)", "rgba(255, 0, 0, 0.5)"
+        ]
+
+
         enable_animations = st.checkbox("Enable animations", value=True)
         Size = st.sidebar.slider("Node Font Size", min_value=10, max_value=30, value=12, step=1)
         Weight = st.sidebar.slider("Edge Width", min_value=1, max_value=10, value=2, step=1)
-        EdgeColor = st.sidebar.selectbox("Choose edge color",EdgeColor,index=0)
-        NodeColor = st.sidebar.selectbox("Choose node color",NodeColor, index=1)
+        EdgeColor = st.sidebar.selectbox("Choose edge color",EdgeColors,index=0)
+        NodeColor = st.sidebar.selectbox("Choose node color",NodeColors, index=1)
 
 
     ## Save settings button
@@ -652,101 +493,27 @@ def home_page(): #action for the home route: #User Input Format and Content and 
             }
         }
 
+    
+    for data in UserMetadata:
+        component = data["summary"]
+        weight = data["weight"]
+        G.add_node(component, weight=weight)    
+    
+    for data in UserMetadata:    
+        source = data["summary"]
+        connections = data["connections"]
+        for target, label in connections.items():
+            G.add_edge(source, target, label=label)
+        
 
-    
-    
-    net = Network(notebook=True, height="500px", width="100%")
+    net = Network(notebook=False, height="500px", width="100%")
     net.from_nx(G)
 
-    net.set_options(options)
+    jsonified_options = json.dumps(options)
+    net.set_options(jsonified_options)
     net.save_graph("graph.html")
-
+    # net.show("graph.html")
 
 
     if st.button("Display Results"):
-        st.experimental_rerun()
-        display_page()
-
-
-
-
-def display_page():
-    graph_html = open("graph.html", "r", encoding="utf-8").read()        
-    components.html(graph_html, height=600)
-    if st.button("Go Chat"):
-        st.session_state.page = "chat"
-
-#CRUD THE GRAPH: Insert, Search, Update, Delete
-def crud_graph(): 
-    pass
-
-def suggest_components(): #suggest nodes and edges
-    pass
-
-def version_control(): #session storage: a list of graphs
-    pass
-
-def summarize_text():
-    pass
-
-def summarize_graph():
-    pass
-
-def expand_edge(): #explanation, summarization and QA chat
-    pass
-
-def expand_node(): #explanation, summarization and QA chat
-    pass 
-
-def memory_techniques():
-    pass
-
-def anki_logic():
-    pass
-
-def Export_Save():
-    pass
-
-def Share(): #Real-Time Collaboration, Documentation and Comments (Users in same session -> Network Effects)
-    pass
-
-
-def chat_page():
-    ## CHATBOT: GraphQA + FileQA
-    if st.button("Let's Chat!"):
-        logo_path = "./images/MindMap.png"  
-        logo = get_image_as_base64(logo_path)
-        with st.spinner("Loading..."):
-            for message in st.session_state.messages:
-                with st.chat_message(message["role"], avatar=logo):
-                    st.write(message["content"])
-        st.success("You're good to go ✅")
-        while not st.button("Done"):
-            with st.chat_message("assistant", avatar=logo):
-                st.write("Hello! I'm your assistant. How can I help you today?")
-            # Chat input
-            user_input = st.chat_input(placeholder="Any questions ?")
-
-            # Display user input in a chat message
-            if user_input:
-                st.session_state.messages.append({"role":"user", "content":user_input})
-                
-                with st.chat_message("user"):
-                    st.write(user_input)
-                # Display assistant response in a chat message
-                system_resp = agents.Chat(user_input)
-                st.session_state.messages.append({"role":"assistant", "content": system_resp})
-                
-                with st.chat_message("assistant", avatar=logo):
-                    st.write(system_resp)
-
-
-    if st.button(""):
-        st.session_state.page = "review"
-        
-def return_home():
-    pass
-    if st.button("Go Home"):
-        st.session_state.page = "home"
-        
-        
+        st.switch_page()

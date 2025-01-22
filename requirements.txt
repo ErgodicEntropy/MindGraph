@@ -6,15 +6,10 @@ cohere
 faiss-cpu
 chromadb==0.4.3
 streamlit
-streamlit-option-menu
-streamlit-router
-streamlit-authenticator==0.3.3
 streamlit-webrtc==0.47.9
 librosa
 pyvis
 networkx
 matplotlib
-pandas
-scipy
 numpy
 json
