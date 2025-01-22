@@ -3,7 +3,7 @@ import streamlit as st
 # from pages.home import home_page
 # from pages.display import display_page
 # from pages.chat import chat_page
-from pages import login, home, display, chat
+from app_pages import login, home, display, chat
 
 st.set_page_config(
     page_title="main",
