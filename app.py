@@ -57,10 +57,17 @@ custom_css = f"""
         </style>
     """
 Languages = ["English", "French", "Arabic", "Specify a language"]
-Colors = [
-    "Blue", "Red", "Green", "Yellow", "Orange", "Purple", "Pink", 
-    "Brown", "Black", "White", "Gray", "Cyan", "Magenta", 
-    "Lime", "Teal", "Navy", "Gold", "Silver", "Beige", "Maroon"
+
+NodeColors = [
+    "lightblue", "lightgreen", "lightcoral", "lightpink", "lightsalmon",
+    "blue", "green", "red", "yellow", "purple",
+    "#FF5733", "#33FF57", "#3357FF", "#FF33A1", "#A133FF"
+]
+
+EdgeColors = [
+    "gray", "black", "blue", "green", "red",
+    "#888888", "#444444", "#0000FF", "#00FF00", "#FF0000",
+    "rgba(128, 128, 128, 0.5)", "rgba(255, 0, 0, 0.5)"
 ]
 
 Structures =  [
@@ -311,110 +318,343 @@ def home_page(): #action for the home route: #User Input Format and Content and 
 
     ## Advanced settings
     with st.sidebar.expander("Advanced Settings"):
-        show_labels = st.checkbox("Show labels", value=True)
         enable_animations = st.checkbox("Enable animations", value=True)
-        Size = st.sidebar.slider("Select Size:", min_value=0, max_value=100, value=50, step=1, format="%d%%")
-        Weight = st.sidebar.slider("Select Weight:", min_value=0, max_value=100, value=50, step=1, format="%d%%")
-        EdgeColor = st.sidebar.selectbox("Choose edge color",Colors,index=0)
-        NodeColor = st.sidebar.selectbox("Choose node color",Colors, index=1)
+        Size = st.sidebar.slider("Node Font Size", min_value=10, max_value=30, value=12, step=1)
+        Weight = st.sidebar.slider("Edge Width", min_value=1, max_value=10, value=2, step=1)
+        EdgeColor = st.sidebar.selectbox("Choose edge color",EdgeColor,index=0)
+        NodeColor = st.sidebar.selectbox("Choose node color",NodeColor, index=1)
+
 
     ## Save settings button
     if st.sidebar.button("Save Settings"):
         st.sidebar.success("Settings saved successfully!")
 
     
-    #Graph Creation:   #Network, Hierarchical, Sequential, Circular    
+    #Graph Creation:   #Network, Hierarchical, Sequential, Circular    -> Barnes Hut is optimal for small graphs, ForceAtlas2Based is optimal for large graphs
     
     if Structure == "Hierarchical":
         G = nx.tree_graph(name="Tree Map", description="Hierarchical representation of user info")
         options = {
+            "nodes": {
+            "color": {
+                "background": NodeColor,
+                    },
+            "font": {
+                "size": Size,
+                "color": "black",
+                "face": "Arial",
+                "strokeWidth": 1,
+                "strokeColor": "white"
+                },
+            "shape": "circle",
+            "size": 20,
+            "borderWidth": 1,
+            "shadow": True,
+            "title": "Node Tooltip",
+            "labelHighlightBold": True,
+            "mass": 1
+            },
+            "edges": {
+            "color": {
+                "color": EdgeColor,
+                "highlight": "red",
+                "hover": "orange",
+                "inherit": False
+                },
+            "width": Weight,
+            "arrows": {
+                "to": True,
+                "middle": False,
+                "from": False
+                },
+            "dashes": False,
+            "smooth": True,
+            "title": "Edge Tooltip",
+            "length": 100,
+            "shadow": True,
+            "selectionWidth": 2
+            },
             "physics": {
-                "enabled": True,
-                "solver": "hierarchical",
+                "enabled": enable_animations,
+                "solver": "barnesHut",
+                "barnesHut": {
+                    "gravitationalConstant": -8000,
+                    "centralGravity": 0.3,
+                    "springLength": 95,
+                    "springConstant": 0.04,
+                    "damping": 0.09,
+                    "avoidOverlap": 0.1
+                },
+                "maxVelocity": 50,
+                "minVelocity": 0.1,
+                "stabilization": {
+                    "enabled": True,
+                    "iterations": 1000,
+                    "updateInterval": 50,
+                    "onlyDynamicEdges": False,
+                    "fit": True
+                }                
+            },
+            "layout": {
                 "hierarchical": {
                     "enabled": True,
-                    "direction": "UD"  # Up-Down
+                    "levelSeparation": 100,
+                    "nodeSpacing": 100
                 }
+            },
+            "interaction": {
+                "dragNodes": True,
+                "dragView": True,
+                "zoomView": True,
+                "hover": True,
+                "multiselect": True,
+                "navigationButtons": True,
+                "keyboard": True
+            },
+            "configure": {
+                "enabled": True,
+                "filter": "nodes,edges",
+                "showButton": True
             }
         }
     elif Structure == "Network":
         G = nx.Graph(name="Mind Network", description="Decentralized representation of user info")
         options = {
+            "nodes": {
+            "color": {
+                "background": NodeColor,
+                    },
+            "font": {
+                "size": Size,
+                "color": "black",
+                "face": "Arial",
+                "strokeWidth": 1,
+                "strokeColor": "white"
+                },
+            "shape": "circle",
+            "size": 20,
+            "borderWidth": 1,
+            "shadow": True,
+            "title": "Node Tooltip",
+            "labelHighlightBold": True,
+            "mass": 1
+            },
+            "edges": {
+            "color": {
+                "color": EdgeColor,
+                "highlight": "red",
+                "hover": "orange",
+                "inherit": False
+                },
+            "width": Weight,
+            "arrows": {
+                "to": True,
+                "middle": False,
+                "from": False
+                },
+            "dashes": False,
+            "smooth": True,
+            "title": "Edge Tooltip",
+            "length": 100,
+            "shadow": True,
+            "selectionWidth": 2
+            },
             "physics": {
-            "enabled": True,
-            "barnesHut": {
-                "gravitationalConstant": -8000,
-                "centralGravity": 0.3,
-                "springLength": 95,
-                "springConstant": 0.04,
-                "damping": 0.09,
-                "avoidOverlap": 0.1
-            }
-            },
-            "layout": {
-                "hierarchical": {
-                    "enabled": False
-                }
-            },
-            "stabilization": {
-                "enabled": True,
-                "iterations": 100
+                "enabled": enable_animations,
+                "solver": "barnesHut",
+                "barnesHut": {
+                    "gravitationalConstant": -8000,
+                    "centralGravity": 0.3,
+                    "springLength": 95,
+                    "springConstant": 0.04,
+                    "damping": 0.09,
+                    "avoidOverlap": 0.1
+                },
+                "maxVelocity": 50,
+                "minVelocity": 0.1,
+                "stabilization": {
+                    "enabled": True,
+                    "iterations": 1000,
+                    "updateInterval": 50,
+                    "onlyDynamicEdges": False,
+                    "fit": True
+                }                
             },
             "interaction": {
+                "dragNodes": True,
+                "dragView": True,
+                "zoomView": True,
                 "hover": True,
-                "zoomView": True
+                "multiselect": True,
+                "navigationButtons": True,
+                "keyboard": True
+            },
+            "configure": {
+                "enabled": True,
+                "filter": "nodes,edges",
+                "showButton": True
             }
         }
     elif Structure == "Sequential":
         G = nx.path_graph(name="MindSequence", description="Sequential representation of user info")
         options = {
+            "nodes": {
+            "color": {
+                "background": NodeColor,
+                    },
+            "font": {
+                "size": Size,
+                "color": "black",
+                "face": "Arial",
+                "strokeWidth": 1,
+                "strokeColor": "white"
+                },
+            "shape": "circle",
+            "size": 20,
+            "borderWidth": 1,
+            "shadow": True,
+            "title": "Node Tooltip",
+            "labelHighlightBold": True,
+            "mass": 1
+            },
+            "edges": {
+            "color": {
+                "color": EdgeColor,
+                "highlight": "red",
+                "hover": "orange",
+                "inherit": False
+                },
+            "width": Weight,
+            "arrows": {
+                "to": True,
+                "middle": False,
+                "from": False
+                },
+            "dashes": False,
+            "smooth": True,
+            "title": "Edge Tooltip",
+            "length": 100,
+            "shadow": True,
+            "selectionWidth": 2
+            },
             "physics": {
-                "enabled": True,
-                "solver": "hierarchical",
-                "hierarchical": {
+                "enabled": enable_animations,
+                "solver": "barnesHut",
+                "barnesHut": {
+                    "gravitationalConstant": -8000,
+                    "centralGravity": 0.3,
+                    "springLength": 95,
+                    "springConstant": 0.04,
+                    "damping": 0.09,
+                    "avoidOverlap": 0.1
+                },
+                "maxVelocity": 50,
+                "minVelocity": 0.1,
+                "stabilization": {
                     "enabled": True,
-                    "direction": "LR"  # Left-Right
-                }
+                    "iterations": 1000,
+                    "updateInterval": 50,
+                    "onlyDynamicEdges": False,
+                    "fit": True
+                }                
+            },
+            "interaction": {
+                "dragNodes": True,
+                "dragView": True,
+                "zoomView": True,
+                "hover": True,
+                "multiselect": True,
+                "navigationButtons": True,
+                "keyboard": True
+            },
+            "configure": {
+                "enabled": True,
+                "filter": "nodes,edges",
+                "showButton": True
             }
         }
     elif Structure == "Circular":
         G = nx.cycle_graph(name="MindCycle", description="Cyclical representation of user info")
         options = {
+            "nodes": {
+            "color": {
+                "background": NodeColor,
+                    },
+            "font": {
+                "size": Size,
+                "color": "black",
+                "face": "Arial",
+                "strokeWidth": 1,
+                "strokeColor": "white"
+                },
+            "shape": "circle",
+            "size": 20,
+            "borderWidth": 1,
+            "shadow": True,
+            "title": "Node Tooltip",
+            "labelHighlightBold": True,
+            "mass": 1
+            },
+            "edges": {
+            "color": {
+                "color": EdgeColor,
+                "highlight": "red",
+                "hover": "orange",
+                "inherit": False
+                },
+            "width": Weight,
+            "arrows": {
+                "to": True,
+                "middle": False,
+                "from": False
+                },
+            "dashes": False,
+            "smooth": True,
+            "title": "Edge Tooltip",
+            "length": 100,
+            "shadow": True,
+            "selectionWidth": 2
+            },
             "physics": {
+                "enabled": enable_animations,
+                "solver": "barnesHut",
+                "barnesHut": {
+                    "gravitationalConstant": -8000,
+                    "centralGravity": 0.3,
+                    "springLength": 95,
+                    "springConstant": 0.04,
+                    "damping": 0.09,
+                    "avoidOverlap": 0.1
+                },
+                "maxVelocity": 50,
+                "minVelocity": 0.1,
+                "stabilization": {
+                    "enabled": True,
+                    "iterations": 1000,
+                    "updateInterval": 50,
+                    "onlyDynamicEdges": False,
+                    "fit": True
+                }                
+            },
+            "interaction": {
+                "dragNodes": True,
+                "dragView": True,
+                "zoomView": True,
+                "hover": True,
+                "multiselect": True,
+                "navigationButtons": True,
+                "keyboard": True
+            },
+            "configure": {
                 "enabled": True,
-                "solver": "circular"
+                "filter": "nodes,edges",
+                "showButton": True
             }
         }
 
 
-    options = {
-        "physics": {
-            "enabled": True,
-            "barnesHut": {
-                "gravitationalConstant": -8000,
-                "centralGravity": 0.3,
-                "springLength": 95,
-                "springConstant": 0.04,
-                "damping": 0.09,
-                "avoidOverlap": 0.1
-            }
-        },
-        "layout": {
-            "hierarchical": {
-                "enabled": False
-            }
-        },
-        "stabilization": {
-            "enabled": True,
-            "iterations": 100
-        },
-        "interaction": {
-            "hover": True,
-            "zoomView": True
-        }
-    }
     
-
+    
     net = Network(notebook=True, height="500px", width="100%")
     net.from_nx(G)
 
