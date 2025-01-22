@@ -5,6 +5,11 @@ from bcrypt import hashpw, gensalt, checkpw  # For password hashing
 ### MAIN RUN
 
 def login_page(): #User Registration, Profile Creation and Login
+    st.set_page_config(
+    page_title="login page",
+    page_icon="👋",
+    )
+
     # Function to hash passwords
     def hash_password(password):
         return hashpw(password.encode(), gensalt())

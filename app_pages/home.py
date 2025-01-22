@@ -5,12 +5,17 @@ import librosa
 import numpy as np
 import matplotlib.pyplot as plt
 import json
-import agents
+from .. import agents 
 import networkx as nx
 from pyvis.network import Network
 
 
 def home_page(): #action for the home route: #User Input Format and Content and Output Format
+    
+    st.set_page_config(
+    page_title="home page",
+    page_icon="👋",
+    )
     
     if "FilteredComponents" not in st.session_state:
         st.session_state.FilteredComponents = []
